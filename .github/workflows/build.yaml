@@ -1,0 +1,93 @@
+name: Build iStore OS
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch'
+        default: istoreos-24.10
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  TZ: Asia/Shanghai
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 720
+    strategy:
+      matrix:
+        arch:
+          - rk35xx
+      fail-fast: false
+
+    steps:
+    - name: 初始化编译环境
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo -E apt-get -qq update
+        sudo -E apt-get -qq install flex bison gawk libncurses-dev libssl-dev python3-pyelftools rsync unzip python3-dev file wget swig
+        sudo rm -rf /usr/share/swift /usr/share/miniconda /usr/lib/jvm /usr/local/share
+ 
+    - name: 合并磁盘
+      uses: easimon/maximize-build-space@master
+      with:
+        root-reserve-mb: 2048
+        swap-size-mb: 1024
+        remove-dotnet: 'true'
+        remove-android: 'true'
+        remove-haskell: 'true'
+        remove-codeql: 'true'
+        remove-docker-images: 'true'
+
+    - name: 准备完成
+      uses: actions/checkout@v4
+
+    - name: 克隆源码
+      run: |
+        git clone https://github.com/istoreos/istoreos -b ${{ github.event.inputs.branch }} --depth=1 openwrt
+        for i in package/*; do ln -s  ../../$i openwrt/$i; done
+        cp feeds.conf openwrt/feeds.conf
+
+    - name: 缓存构建动作
+      uses: klever1988/cachewrtbuild@main
+      with:
+        ccache: 'true'
+        mixkey: ${{ matrix.arch }}
+        prefix: openwrt
+
+    - name: 更新 feeds
+      run: cd openwrt && ./scripts/feeds update -a
+
+    - name: 安装 feeds
+      run: cd openwrt && ./scripts/feeds install -a
+
+    - name: 加载自定义配置
+      run: |
+        [ -e files ] && mv files openwrt/files
+        cp ${{ matrix.arch }}.buildinfo openwrt/.config
+  
+    - name: 下载软件包
+      run: |
+        cd openwrt
+        make defconfig
+        make download -j$(nproc)
+
+    - name: 编译固件
+      run: |
+        cd openwrt
+        echo -e "$(nproc) thread compile"
+        make -j$(nproc) || make -j1 || make -j1 V=s
+
+    - name: 上传 bin 文件夹
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ matrix.arch }}
+        name: ${{ github.event.inputs.branch }}-${{ matrix.arch }}
+        files: |
+          openwrt/bin/targets/*/*/*.img.gz
+          openwrt/bin/targets/*/*/*.buildinfo
