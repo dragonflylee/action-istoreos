@@ -49,7 +49,7 @@ jobs:
     - name: 克隆源码
       run: |
         git clone https://github.com/istoreos/istoreos -b ${{ matrix.branch }} --depth=1 openwrt
-        git clone https://github.com/dragonflylee/p7zip-openwrt.git openwrt/package/p7zip
+        for i in package/*; do ln -s  ../../$i openwrt/$i; done
         cp feeds.conf openwrt/feeds.conf
 
     - name: 缓存构建动作
