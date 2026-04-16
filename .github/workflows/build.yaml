@@ -45,7 +45,7 @@ jobs:
         remove-docker-images: 'true'
 
     - name: 准备完成
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: 克隆源码
       run: |
@@ -84,7 +84,7 @@ jobs:
         make -j$(nproc) || make -j1 || make -j1 V=s
 
     - name: 上传 bin 文件夹
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v3
       with:
         tag_name: ${{ matrix.arch }}
         name: ${{ github.event.inputs.branch }}-${{ matrix.arch }}

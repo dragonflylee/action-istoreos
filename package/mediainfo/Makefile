@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mediainfo
-PKG_VERSION:=25.10
+PKG_VERSION:=26.05
 PKG_RELEASE:=0
 
 PKG_SOURCE:=MediaInfo_CLI_$(PKG_VERSION)_GNU_FromSource.tar.xz
 PKG_SOURCE_URL:=https://mediaarea.net/download/binary/mediainfo/$(PKG_VERSION)
-PKG_HASH:=9a7743562053d619dcfd0cdafe71eadd6c36b134649d378a4c5c8d074ace42b5
+PKG_HASH:=220e54edc92a559cf8c2b4e332eba0116f9f758b2588ea02d432d1894a569c6a
 
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=MediaInfo_CLI_GNU_FromSource/MediaInfo/README.md
